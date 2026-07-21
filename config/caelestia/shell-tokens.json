@@ -1,0 +1,12 @@
+{
+    "sizes": {
+        "bar": {
+            "batteryWidth": 250,
+            "innerWidth": 40,
+            "kbLayoutWidth": 320,
+            "networkWidth": 320,
+            "trayMenuWidth": 300,
+            "windowPreviewSize": 400
+        }
+    }
+}

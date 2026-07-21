@@ -1,0 +1,79 @@
+{
+    "appearance": {
+        "font": {
+            "body": {
+                "large": {
+                    "family": "JetBrainsMono Nerd Font",
+                    "size": 16
+                },
+                "medium": {
+                    "family": "JetBrainsMono Nerd Font",
+                    "size": 14
+                },
+                "small": {
+                    "family": "JetBrainsMono Nerd Font",
+                    "size": 12
+                }
+            },
+            "clock": "JetBrainsMono Nerd Font",
+            "icon": {
+                "large": {
+                    "family": "Material Symbols Rounded"
+                },
+                "medium": {
+                    "family": "Material Symbols Rounded"
+                },
+                "small": {
+                    "family": "Material Symbols Rounded"
+                }
+            },
+            "label": {
+                "medium": {
+                    "family": "JetBrainsMono Nerd Font",
+                    "size": 12
+                },
+                "small": {
+                    "family": "JetBrainsMono Nerd Font",
+                    "size": 11
+                }
+            },
+            "mono": {
+                "large": {
+                    "family": "JetBrainsMono Nerd Font",
+                    "size": 16
+                },
+                "medium": {
+                    "family": "JetBrainsMono Nerd Font",
+                    "size": 14
+                },
+                "small": {
+                    "family": "JetBrainsMono Nerd Font",
+                    "size": 12
+                }
+            },
+            "workspaces": "JetBrainsMono Nerd Font"
+        },
+        "transparency": {
+            "enabled": false
+        }
+    },
+    "border": {
+        "rounding": 25,
+        "thickness": 4
+    },
+    "general": {
+        "apps": {
+            "terminal": [
+                "kitty"
+            ]
+        }
+    },
+    "services": {
+        "useFahrenheit": false
+    },
+    "utilities": {
+        "toasts": {
+            "nowPlaying": true
+        }
+    }
+}
