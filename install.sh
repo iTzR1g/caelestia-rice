@@ -4,8 +4,14 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 CONFIG_SRC="$REPO_DIR/config"
 BACKUP_DIR="$HOME/.config/caelestia-rice.backup.$(date +%Y%m%d%H%M%S)"
+CAELESTIA_SRC="$HOME/.config/quickshell/caelestia"
 
 # ── Packages ──────────────────────────────────────────────────────
+BUILD_DEPS=(
+    base-devel git cmake ninja
+    qt6-base qt6-declarative qt6-svg qt6-wayland
+    wayland-protocols pkgconf libglvnd
+)
 PACMAN_PKGS=(
     hyprland kitty fish fastfetch starship
     grim slurp eza zoxide lazygit
@@ -31,7 +37,6 @@ if ! command -v pacman &>/dev/null; then
     err "This installer requires pacman (Arch Linux or derivative)."
     exit 1
 fi
-
 if ! command -v sudo &>/dev/null; then
     err "sudo is required."
     exit 1
@@ -47,70 +52,84 @@ install_aur_helper() {
     local dir="/tmp/$name-build"
     info "Installing $name from AUR..."
 
-    sudo pacman -S --needed --noconfirm git base-devel >/dev/null 2>&1
-
     [ -d "$dir" ] && rm -rf "$dir"
     if ! git clone --depth=1 "https://aur.archlinux.org/$name.git" "$dir" 2>/dev/null; then
         return 1
     fi
-
     (cd "$dir" && makepkg -si --noconfirm --needed)
     rm -rf "$dir"
-    return 0
 }
 
 AUR_HELPER=""
 if command -v paru &>/dev/null; then
     AUR_HELPER="paru"
-    ok "paru already installed."
 elif command -v yay &>/dev/null; then
     AUR_HELPER="yay"
-    ok "yay already installed."
 else
     info "No AUR helper found. Installing paru..."
     if install_aur_helper "paru"; then
         AUR_HELPER="paru"
-        ok "paru installed."
     else
-        warn "paru install failed, trying yay..."
-        if install_aur_helper "yay"; then
-            AUR_HELPER="yay"
-            ok "yay installed."
-        else
-            warn "Could not install paru or yay. AUR packages will be skipped."
-        fi
+        warn "paru failed, trying yay..."
+        install_aur_helper "yay"
+        AUR_HELPER="yay"
     fi
+    ok "$AUR_HELPER installed."
 fi
 
-# ── Install pacman packages ──────────────────────────────────────
-MISSING=()
-for pkg in "${PACMAN_PKGS[@]}"; do
-    pacman -Qi "$pkg" &>/dev/null || MISSING+=("$pkg")
+# ── Install build dependencies ────────────────────────────────────
+MISSING_BUILD=()
+for pkg in "${BUILD_DEPS[@]}"; do
+    pacman -Qi "$pkg" &>/dev/null || MISSING_BUILD+=("$pkg")
 done
+if [ ${#MISSING_BUILD[@]} -gt 0 ]; then
+    info "Installing build deps: ${MISSING_BUILD[*]}"
+    sudo pacman -S --needed --noconfirm "${MISSING_BUILD[@]}"
+fi
 
-if [ ${#MISSING[@]} -gt 0 ]; then
-    info "Installing: ${MISSING[*]}"
-    sudo pacman -S --needed --noconfirm "${MISSING[@]}"
-    ok "Packages installed."
-else
-    ok "All pacman packages already present."
+# ── Install app packages ──────────────────────────────────────────
+MISSING_PKGS=()
+for pkg in "${PACMAN_PKGS[@]}"; do
+    pacman -Qi "$pkg" &>/dev/null || MISSING_PKGS+=("$pkg")
+done
+if [ ${#MISSING_PKGS[@]} -gt 0 ]; then
+    info "Installing: ${MISSING_PKGS[*]}"
+    sudo pacman -S --needed --noconfirm "${MISSING_PKGS[@]}"
 fi
 
 # ── Install AUR packages ─────────────────────────────────────────
-if [ -n "$AUR_HELPER" ]; then
-    for pkg in "${AUR_PKGS[@]}"; do
-        if pacman -Qi "$pkg" &>/dev/null; then
-            ok "$pkg already installed."
-        else
-            info "Installing $pkg from AUR..."
-            "$AUR_HELPER" -S --noconfirm --needed "$pkg"
-            ok "$pkg installed."
-        fi
-    done
+for pkg in "${AUR_PKGS[@]}"; do
+    if pacman -Qi "$pkg" &>/dev/null; then
+        ok "$pkg already installed."
+    else
+        info "Installing $pkg from AUR..."
+        "$AUR_HELPER" -S --noconfirm --needed "$pkg"
+    fi
+done
+
+# ── Build Caelestia shell ─────────────────────────────────────────
+if [ -d "$CAELESTIA_SRC/.git" ]; then
+    info "Caelestia shell source exists. Updating..."
+    git -C "$CAELESTIA_SRC" pull --ff-only
 else
-    for pkg in "${AUR_PKGS[@]}"; do
-        warn "Skipping $pkg — no AUR helper available. Install manually."
-    done
+    info "Cloning Caelestia shell..."
+    git clone --depth=1 "https://github.com/caelestia-dots/shell.git" "$CAELESTIA_SRC"
+fi
+
+if [ ! -f "$CAELESTIA_SRC/build/build.ninja" ]; then
+    info "Configuring build with CMake..."
+    cmake -S "$CAELESTIA_SRC" -B "$CAELESTIA_SRC/build" -G Ninja -DCMAKE_BUILD_TYPE=Release
+fi
+
+info "Building Caelestia shell (this may take a while)..."
+cmake --build "$CAELESTIA_SRC/build" --parallel
+ok "Caelestia shell built."
+
+# ── Apply QML overrides ──────────────────────────────────────────
+if [ -d "$CONFIG_SRC/quickshell/caelestia" ]; then
+    info "Applying QML overrides..."
+    cp -r "$CONFIG_SRC/quickshell/caelestia/." "$CAELESTIA_SRC/"
+    ok "QML overrides applied (clock, osicon, toggles, gamemode)."
 fi
 
 # ── JetBrainsMono Nerd Font ───────────────────────────────────────
@@ -122,16 +141,12 @@ if ! fc-list | grep -qi "JetBrainsMono.*Nerd" &>/dev/null; then
         "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
     unzip -qo "$FONT_DIR/JetBrainsMono.zip" -d "$FONT_DIR" && rm "$FONT_DIR/JetBrainsMono.zip"
     fc-cache -f
-    ok "Fonts installed."
-else
-    ok "JetBrainsMono Nerd Font already present."
 fi
 
 # ── Backup existing configs ───────────────────────────────────────
-BACKUP_DIRS=(hypr fish kitty fastfetch caelestia quickshell caelestia-dots)
-info "Backing up existing configs to $BACKUP_DIR ..."
+info "Backing up configs to $BACKUP_DIR ..."
 mkdir -p "$BACKUP_DIR"
-for d in "${BACKUP_DIRS[@]}"; do
+for d in hypr fish kitty fastfetch caelestia caelestia-dots; do
     [ -d "$HOME/.config/$d" ] && cp -r "$HOME/.config/$d" "$BACKUP_DIR/" 2>/dev/null || true
 done
 [ -f "$HOME/.config/starship.toml" ] && cp "$HOME/.config/starship.toml" "$BACKUP_DIR/"
@@ -139,19 +154,16 @@ done
     mkdir -p "$BACKUP_DIR/state"
     cp "$HOME/.local/state/caelestia/scheme.json" "$BACKUP_DIR/state/"
 }
-ok "Backup complete."
 
 # ── Deploy configs ────────────────────────────────────────────────
 info "Deploying configs..."
 deploy() {
     local src="$CONFIG_SRC/$1"
     local dest="$HOME/$2"
-    if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-        rm -rf "$dest"
-    fi
+    [ -e "$dest" ] && [ ! -L "$dest" ] && rm -rf "$dest"
     mkdir -p "$(dirname "$dest")"
     ln -sfT "$src" "$dest"
-    ok "$dest → $src"
+    ok "  $dest → $src"
 }
 
 deploy hypr                .config/hypr
@@ -159,39 +171,32 @@ deploy fish                .config/fish
 deploy kitty               .config/kitty
 deploy fastfetch           .config/fastfetch
 deploy caelestia           .config/caelestia
-deploy quickshell/caelestia .config/quickshell/caelestia
 deploy starship.toml       .config/starship.toml
 
-# ── Color scheme ──────────────────────────────────────────────────
-if [ -f "$CONFIG_SRC/caelestia/scheme.json" ]; then
-    mkdir -p "$HOME/.local/state/caelestia"
-    cp "$CONFIG_SRC/caelestia/scheme.json" "$HOME/.local/state/caelestia/scheme.json"
-    ok "Caelestia color scheme applied."
-fi
+# ── Caelestia config files (shell.json, tokens, scheme) ───────────
+cp "$CONFIG_SRC/caelestia/shell.json"        "$HOME/.config/caelestia/shell.json"
+cp "$CONFIG_SRC/caelestia/shell-tokens.json" "$HOME/.config/caelestia/shell-tokens.json"
+mkdir -p "$HOME/.local/state/caelestia"
+cp "$CONFIG_SRC/caelestia/scheme.json"       "$HOME/.local/state/caelestia/scheme.json"
+ok "Caelestia config and color scheme deployed."
 
 # ── Fish as default shell ─────────────────────────────────────────
 FISH="$(which fish 2>/dev/null || true)"
 if [ -n "$FISH" ]; then
-    if ! grep -qx "$FISH" /etc/shells 2>/dev/null; then
-        echo "$FISH" | sudo tee -a /etc/shells >/dev/null
-    fi
+    grep -qx "$FISH" /etc/shells 2>/dev/null || echo "$FISH" | sudo tee -a /etc/shells >/dev/null
     if [ "$SHELL" != "$FISH" ]; then
-        info "Setting fish as default shell..."
         chsh -s "$FISH"
-        ok "Default shell set to fish (log out & back in to apply)."
-    else
-        ok "Fish is already the default shell."
+        info "Default shell set to fish. Log out & back in to apply."
     fi
-else
-    warn "fish not found — skipping shell change."
 fi
 
-# ── Done ──────────────────────────────────────────────────────────
+# ── Post-install notes ────────────────────────────────────────────
 echo
-ok "Installation complete!"
+ok "Everything installed."
 echo
-echo "$(color '→')  Restart Hyprland:  $(color 'SUPER + SHIFT + R')"
-echo "$(color '→')  Restart shell:     $(color 'exec fish')"
-echo "$(color '→')  Caelestia scheme:  auto-generated from wallpaper on next login"
-echo "$(color '→')                         or keep the included scheme.json"
+echo "$(color '→')  Restart Hyprland:   $(color 'SUPER + SHIFT + R')  or  $(color 'hyprctl reload')"
+echo "$(color '→')  Restart Caelestia:  $(color 'CTRL + SUPER + ALT + R')  or reboot"
+echo "$(color '→')  Restart shell:      $(color 'exec fish')"
+echo "$(color '→')  Caelestia scheme:   auto-generated from wallpaper on next login"
+echo "$(color '→')  Build logs:         $(color "$CAELESTIA_SRC/build")"
 echo
