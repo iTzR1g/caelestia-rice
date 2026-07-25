@@ -14,7 +14,7 @@ BUILD_DEPS=(
 )
 PACMAN_PKGS=(
     hyprland kitty fish fastfetch starship
-    grim slurp eza zoxide lazygit
+    grim slurp wl-clipboard jq eza zoxide lazygit
     curl unzip
 )
 AUR_PKGS=(quickshell)

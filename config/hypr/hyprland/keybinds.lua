@@ -80,6 +80,7 @@ hl.bind(M .. " + ALT + L", hl.dsp.exec_cmd("hyprctl dispatch resizeactive 40 0")
 
 -- Screenshots
 hl.bind("Print", hl.dsp.exec_cmd("/home/rigby/.config/hypr/scripts/screenshot.sh"))
+hl.bind(M .. " + Print", hl.dsp.exec_cmd("/home/rigby/.config/hypr/scripts/screenshot.sh focused"))
 hl.bind(M .. " + SHIFT + S", hl.dsp.exec_cmd("/home/rigby/.config/hypr/scripts/screenshot.sh area"))
 
 -- Volume
