@@ -13,7 +13,7 @@ BUILD_DEPS=(
     wayland-protocols pkgconf libglvnd
 )
 PACMAN_PKGS=(
-    hyprland kitty fish fastfetch starship
+    hyprland kitty bash fastfetch starship
     grim slurp wl-clipboard jq eza zoxide lazygit
     curl unzip
 )
@@ -146,9 +146,10 @@ fi
 # ── Backup existing configs ───────────────────────────────────────
 info "Backing up configs to $BACKUP_DIR ..."
 mkdir -p "$BACKUP_DIR"
-for d in hypr fish kitty fastfetch caelestia caelestia-dots; do
+for d in hypr bash kitty fastfetch caelestia caelestia-dots; do
     [ -d "$HOME/.config/$d" ] && cp -r "$HOME/.config/$d" "$BACKUP_DIR/" 2>/dev/null || true
 done
+[ -f "$HOME/.bashrc" ] && cp "$HOME/.bashrc" "$BACKUP_DIR/"
 [ -f "$HOME/.config/starship.toml" ] && cp "$HOME/.config/starship.toml" "$BACKUP_DIR/"
 [ -f "$HOME/.local/state/caelestia/scheme.json" ] && {
     mkdir -p "$BACKUP_DIR/state"
@@ -167,7 +168,7 @@ deploy() {
 }
 
 deploy hypr                .config/hypr
-deploy fish                .config/fish
+deploy bash/.bashrc        .bashrc
 deploy kitty               .config/kitty
 deploy fastfetch           .config/fastfetch
 deploy caelestia           .config/caelestia
@@ -180,13 +181,13 @@ mkdir -p "$HOME/.local/state/caelestia"
 cp "$CONFIG_SRC/caelestia/scheme.json"       "$HOME/.local/state/caelestia/scheme.json"
 ok "Caelestia config and color scheme deployed."
 
-# ── Fish as default shell ─────────────────────────────────────────
-FISH="$(which fish 2>/dev/null || true)"
-if [ -n "$FISH" ]; then
-    grep -qx "$FISH" /etc/shells 2>/dev/null || echo "$FISH" | sudo tee -a /etc/shells >/dev/null
-    if [ "$SHELL" != "$FISH" ]; then
-        chsh -s "$FISH"
-        info "Default shell set to fish. Log out & back in to apply."
+# ── Bash as default shell ─────────────────────────────────────────
+BASH="$(which bash 2>/dev/null || true)"
+if [ -n "$BASH" ]; then
+    grep -qx "$BASH" /etc/shells 2>/dev/null || echo "$BASH" | sudo tee -a /etc/shells >/dev/null
+    if [ "$SHELL" != "$BASH" ]; then
+        chsh -s "$BASH"
+        info "Default shell set to bash. Log out & back in to apply."
     fi
 fi
 
