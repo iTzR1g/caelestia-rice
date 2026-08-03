@@ -60,11 +60,8 @@ only_attached = true
 
 [git_status]
 style = "bold italic #1793d1"
-format = "([⎪$ahead_behind$staged$modified$untracked$renamed$deleted$conflicted$stashed⎥]($style))"
+format = "([⎪$staged$modified$untracked$renamed$deleted$conflicted$stashed⎥]($style))"
 conflicted = "[◪◦](italic bright-magenta)"
-ahead = "[▴│[${count}](bold white)│](italic green)"
-behind = "[▿│[${count}](bold white)│](italic red)"
-diverged = "[◇ ▴┤[${ahead_count}](regular white)│▿┤[${behind_count}](regular white)│](italic bright-magenta)"
 untracked = "[◌◦](italic bright-yellow)"
 stashed = "[◃◈](italic white)"
 modified = "[●◦](italic yellow)"
@@ -76,7 +73,7 @@ deleted = "[✕](italic red)"
 format = '([▴$added]($added_style))([▿$deleted]($deleted_style))'
 added_style = 'italic dimmed green'
 deleted_style = 'italic dimmed red'
-disabled = false
+disabled = true
 
 [cmd_duration]
 min_time = 0
