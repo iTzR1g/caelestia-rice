@@ -18,6 +18,9 @@ hl.on("hyprland.start", function()
     -- Disable touchpad tap-to-click
     hl.exec_cmd("nohup /home/rigby/.config/hypr/scripts/disable-tap-to-click.sh > /dev/null 2>&1 &")
 
+    -- Load WiFi module and restart DNS
+    hl.exec_cmd("sudo -n modprobe brcmfmac 2>/dev/null; sudo -n systemctl restart systemd-resolved 2>/dev/null")
+
     -- Cursors
     hl.exec_cmd("hyprctl setcursor " .. vars.cursorTheme .. " " .. vars.cursorSize)
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-theme " .. vars.cursorTheme)
