@@ -198,7 +198,8 @@ else
 fi
 
 # ── Apply QML overrides (before build so they're in the tree) ─────
-if [ -d "$CONFIG_SRC/quickshell/caelestia" ]; then
+if [ -d "$CONFIG_SRC/quickshell/caelestia" ] && \
+   [ "$(readlink -f "$CAELESTIA_SRC" 2>/dev/null)" != "$(readlink -f "$CONFIG_SRC/quickshell/caelestia")" ]; then
     info "Applying QML overrides..."
     cp -r "$CONFIG_SRC/quickshell/caelestia/." "$CAELESTIA_SRC/"
     ok "QML overrides applied (clock, osicon, toggles, gamemode)."
@@ -231,6 +232,14 @@ info "Deploying configs..."
 deploy() {
     local src="$CONFIG_SRC/$1"
     local dest="$HOME/$2"
+
+    # Avoid clobbering / self-copying: if the target already resolves to the
+    # repo path (e.g. from a previous run / manual symlink), leave it alone.
+    if [ -e "$dest" ] && [ "$(readlink -f "$dest" 2>/dev/null)" = "$(readlink -f "$src")" ]; then
+        ok "  $dest already points to $src"
+        return
+    fi
+
     [ -e "$dest" ] && [ ! -L "$dest" ] && rm -rf "$dest"
     mkdir -p "$(dirname "$dest")"
     ln -sfT "$src" "$dest"
@@ -244,9 +253,20 @@ deploy fastfetch           .config/fastfetch
 deploy caelestia           .config/caelestia
 deploy starship.toml       .config/starship.toml
 
+# Copy a file only if it isn't already the same file as the destination
+# (works through symlinks, so repo symlinks can't cause self-copies).
+safe_copy() {
+    local src="$1" dest="$2"
+    if [ -e "$src" ] && [ "$(readlink -f "$dest" 2>/dev/null)" = "$(readlink -f "$src")" ]; then
+        ok "  $dest already matches $src"
+        return 0
+    fi
+    cp -f "$src" "$dest"
+}
+
 # ── Caelestia state files (scheme is generated into state, not config)
 mkdir -p "$STATE_DIR"
-cp "$CONFIG_SRC/caelestia/scheme.json" "$STATE_DIR/scheme.json"
+safe_copy "$CONFIG_SRC/caelestia/scheme.json" "$STATE_DIR/scheme.json"
 ok "Caelestia config and color scheme deployed."
 
 # ── Hyprpaper (generated per-user: no env expansion in its config) ─
@@ -259,9 +279,7 @@ ok "hyprpaper.conf generated for $USER."
 # ── Media dirs & a stock wallpaper ────────────────────────────────
 mkdir -p "$HOME/Pictures/Screenshots"
 mkdir -p "$HOME/Pictures/Wallpapers"
-if [ ! -e "$HOME/Pictures/Wallpapers/dark.png" ]; then
-    cp "$HOME/.config/hypr/wallpapers/dark.png" "$HOME/Pictures/Wallpapers/dark.png"
-fi
+safe_copy "$HOME/.config/hypr/wallpapers/dark.png" "$HOME/Pictures/Wallpapers/dark.png"
 ok "Media directories ready."
 
 # ── Enable system services ────────────────────────────────────────
