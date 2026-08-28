@@ -1,8 +1,9 @@
 local vars = require("variables")
 local fn   = require("hyprland.functions")
+local home = os.getenv("HOME")
 
 hl.on("hyprland.start", function()
-    hl.exec_cmd("mkdir -p /home/rigby/Pictures/Screenshots")
+    hl.exec_cmd("mkdir -p " .. home .. "/Pictures/Screenshots")
 
     -- Keyring and auth
     hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
@@ -16,7 +17,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("trash-empty 30")
 
     -- Disable touchpad tap-to-click
-    hl.exec_cmd("nohup /home/rigby/.config/hypr/scripts/disable-tap-to-click.sh > /dev/null 2>&1 &")
+    hl.exec_cmd("nohup " .. home .. "/.config/hypr/scripts/disable-tap-to-click.sh > /dev/null 2>&1 &")
 
     -- Load WiFi module and restart DNS
     hl.exec_cmd("sudo -n modprobe brcmfmac 2>/dev/null; sudo -n systemctl restart systemd-resolved 2>/dev/null")
@@ -34,7 +35,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("mpris-proxy")
 
     -- Apps
-    hl.exec_cmd("sleep 2 && /home/rigby/.config/hypr/panel/caelestia-launch.sh")
+    hl.exec_cmd("sleep 2 && " .. home .. "/.config/hypr/panel/caelestia-launch.sh")
 end)
 
 -- Resizer listener

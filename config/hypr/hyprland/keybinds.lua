@@ -2,6 +2,7 @@ local vars = require("variables")
 local fn   = require("hyprland.functions")
 
 local M = "SUPER"
+local home = os.getenv("HOME")
 
 -- Launcher
 hl.bind("SUPER + SUPER_L", hl.dsp.global("caelestia:launcher"), { release = true })
@@ -79,9 +80,9 @@ hl.bind(M .. " + ALT + K", hl.dsp.exec_cmd("hyprctl dispatch resizeactive 0 -40"
 hl.bind(M .. " + ALT + L", hl.dsp.exec_cmd("hyprctl dispatch resizeactive 40 0"),  { repeating = true })
 
 -- Screenshots
-hl.bind("Print", hl.dsp.exec_cmd("/home/rigby/.config/hypr/scripts/screenshot.sh"))
-hl.bind(M .. " + Print", hl.dsp.exec_cmd("/home/rigby/.config/hypr/scripts/screenshot.sh focused"))
-hl.bind(M .. " + SHIFT + S", hl.dsp.exec_cmd("/home/rigby/.config/hypr/scripts/screenshot.sh area"))
+hl.bind("Print", hl.dsp.exec_cmd(home .. "/.config/hypr/scripts/screenshot.sh"))
+hl.bind(M .. " + Print", hl.dsp.exec_cmd(home .. "/.config/hypr/scripts/screenshot.sh focused"))
+hl.bind(M .. " + SHIFT + S", hl.dsp.exec_cmd(home .. "/.config/hypr/scripts/screenshot.sh area"))
 
 -- Volume
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
@@ -110,11 +111,11 @@ hl.bind(vars.kbSession, hl.dsp.global("caelestia:session"))
 hl.bind(vars.kbShowSidebar, hl.dsp.global("caelestia:sidebar"))
 
 -- Game mode toggle
-hl.bind(M .. " + SHIFT + G", hl.dsp.exec_cmd("/home/rigby/.config/hypr/scripts/gamemode.sh"))
+hl.bind(M .. " + SHIFT + G", hl.dsp.exec_cmd(home .. "/.config/hypr/scripts/gamemode.sh"))
 
 -- Shell reload
-hl.bind("CTRL + SUPER + SHIFT + R", hl.dsp.exec_cmd("/home/rigby/.config/hypr/panel/caelestia-launch.sh"), { release = true })
-hl.bind("CTRL + SUPER + ALT + R", hl.dsp.exec_cmd("/home/rigby/.config/hypr/panel/caelestia-launch.sh"), { release = true })
+hl.bind("CTRL + SUPER + SHIFT + R", hl.dsp.exec_cmd(home .. "/.config/hypr/panel/caelestia-launch.sh"), { release = true })
+hl.bind("CTRL + SUPER + ALT + R", hl.dsp.exec_cmd(home .. "/.config/hypr/panel/caelestia-launch.sh"), { release = true })
 
 -- Mouse bindings
 hl.bind(M .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
