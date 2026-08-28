@@ -205,7 +205,13 @@ if [ -d "$CONFIG_SRC/quickshell/caelestia" ] && \
     ok "QML overrides applied (clock, osicon, toggles, gamemode)."
 fi
 
+needs_cmake=false
 if [ ! -f "$CAELESTIA_SRC/build/build.ninja" ]; then
+    needs_cmake=true
+elif [ -f "$CAELESTIA_SRC/CMakeLists.txt" ] && [ "$CAELESTIA_SRC/CMakeLists.txt" -nt "$CAELESTIA_SRC/build/build.ninja" ]; then
+    needs_cmake=true
+fi
+if [ "$needs_cmake" = true ]; then
     info "Configuring build with CMake..."
     cmake -S "$CAELESTIA_SRC" -B "$CAELESTIA_SRC/build" -G Ninja -DCMAKE_BUILD_TYPE=Release
 fi
@@ -217,11 +223,15 @@ ok "Caelestia shell built."
 # ── Backup existing configs ───────────────────────────────────────
 info "Backing up existing configs to $BACKUP_DIR ..."
 mkdir -p "$BACKUP_DIR"
-for d in hypr bash kitty fastfetch caelestia caelestia-dots quickshell; do
-    [ -d "$HOME/.config/$d" ] && cp -r "$HOME/.config/$d" "$BACKUP_DIR/" 2>/dev/null || true
+# Only real (non-symlink) configs get backed up — ones symlinked into this
+# repo are this repo's own files, and quickshell is re-cloned/built anyway.
+for d in hypr bash kitty fastfetch caelestia caelestia-dots; do
+    if [ -e "$HOME/.config/$d" ] && [ ! -L "$HOME/.config/$d" ]; then
+        cp -r "$HOME/.config/$d" "$BACKUP_DIR/" 2>/dev/null || true
+    fi
 done
-[ -f "$HOME/.bashrc" ] && cp "$HOME/.bashrc" "$BACKUP_DIR/" 2>/dev/null || true
-[ -f "$HOME/.config/starship.toml" ] && cp "$HOME/.config/starship.toml" "$BACKUP_DIR/" 2>/dev/null || true
+[ -f "$HOME/.bashrc" ] && [ ! -L "$HOME/.bashrc" ] && cp "$HOME/.bashrc" "$BACKUP_DIR/" 2>/dev/null || true
+[ -f "$HOME/.config/starship.toml" ] && [ ! -L "$HOME/.config/starship.toml" ] && cp "$HOME/.config/starship.toml" "$BACKUP_DIR/" 2>/dev/null || true
 [ -f "$STATE_DIR/scheme.json" ] && {
     mkdir -p "$BACKUP_DIR/state"
     cp "$STATE_DIR/scheme.json" "$BACKUP_DIR/state/" 2>/dev/null || true
@@ -232,6 +242,11 @@ info "Deploying configs..."
 deploy() {
     local src="$CONFIG_SRC/$1"
     local dest="$HOME/$2"
+
+    if [ ! -e "$src" ]; then
+        warn "  Skipping $dest: $src not found"
+        return
+    fi
 
     # Avoid clobbering / self-copying: if the target already resolves to the
     # repo path (e.g. from a previous run / manual symlink), leave it alone.
