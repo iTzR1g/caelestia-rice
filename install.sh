@@ -220,11 +220,11 @@ mkdir -p "$BACKUP_DIR"
 for d in hypr bash kitty fastfetch caelestia caelestia-dots quickshell; do
     [ -d "$HOME/.config/$d" ] && cp -r "$HOME/.config/$d" "$BACKUP_DIR/" 2>/dev/null || true
 done
-[ -f "$HOME/.bashrc" ] && cp "$HOME/.bashrc" "$BACKUP_DIR/"
-[ -f "$HOME/.config/starship.toml" ] && cp "$HOME/.config/starship.toml" "$BACKUP_DIR/"
+[ -f "$HOME/.bashrc" ] && cp "$HOME/.bashrc" "$BACKUP_DIR/" 2>/dev/null || true
+[ -f "$HOME/.config/starship.toml" ] && cp "$HOME/.config/starship.toml" "$BACKUP_DIR/" 2>/dev/null || true
 [ -f "$STATE_DIR/scheme.json" ] && {
     mkdir -p "$BACKUP_DIR/state"
-    cp "$STATE_DIR/scheme.json" "$BACKUP_DIR/state/"
+    cp "$STATE_DIR/scheme.json" "$BACKUP_DIR/state/" 2>/dev/null || true
 }
 
 # ── Deploy configs ────────────────────────────────────────────────
@@ -297,7 +297,7 @@ ok "Services enabled."
 # ── Browser (best-effort: config uses flatpak run com.brave.Browser)
 if ! flatpak info com.brave.Browser &>/dev/null; then
     info "Setting up Flatpak + Brave browser (best effort)..."
-    flatpak remote-add --if-not-exists flathub "https://dl.flathub.org/repo/flathub.flatpakrepo" 2>/dev/null
+    flatpak remote-add --if-not-exists flathub "https://dl.flathub.org/repo/flathub.flatpakrepo" 2>/dev/null || true
     if flatpak install --noninteractive --assumeyes flathub com.brave.Browser; then
         ok "Brave installed via Flatpak."
     else
@@ -309,7 +309,7 @@ fi
 BASH="$(which bash 2>/dev/null || true)"
 if [ -n "$BASH" ] && [ "$SHELL" != "$BASH" ]; then
     grep -qx "$BASH" /etc/shells 2>/dev/null || echo "$BASH" | sudo tee -a /etc/shells >/dev/null
-    sudo chsh -s "$BASH" "$USER"
+    sudo chsh -s "$BASH" "$USER" 2>/dev/null || warn "Could not set bash as your default shell; run 'chsh -s $BASH' manually."
     info "Default shell set to bash. Log out & back in to apply."
 fi
 

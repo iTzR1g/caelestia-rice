@@ -3,3 +3,5 @@
 .DS_Store
 *.swp
 *.swo
+# Per-user config generated into the tracked tree via the ~/.config/hypr symlink
+config/hypr/hyprpaper.conf
