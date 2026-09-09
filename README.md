@@ -1,1 +1,1 @@
-just a caelestia shell rice
+jst a caelestia shell rice
